@@ -1,14 +1,5 @@
 # DAT602
-
-Hand in the URL to a GitHUB repository created and owned by you that contains the work from sections 1 to
-5 :
-A Git HUB repository “readme” that describes the purpose and content of the repository, that
-contains the following:
-A report that includes, descriptive and explanatory writing according to all task sections as described
-above.
-All SQL and C# .net application source code in a Visual Studio project.
-
-purpose of this repo is to present my work regarding the assignment one rubrik for DAT602. The goal is to hold my files so that they can be used to compile my assignment for my teacher to review and mark.
+The purpose of this repo is to present my work regarding the assignment one rubrik for DAT602. The goal is to hold my files so that they can be used to compile my assignment for my teacher to review and mark.
 
 The content in this repository is two sql files one containing the user requirements like logging in and registering users. the other handled creating a procedue which creates all the tables needed for my game. there is also insert statements for each table beneath the procedure. 
 There is a zip file that contains my C# folder that was on my pc for this assignment, it contains a framework for a new game i am developing in which a player can go around a grid and gather items and attack monsters along with other players.
