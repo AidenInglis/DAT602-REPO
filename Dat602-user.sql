@@ -1,90 +1,78 @@
--- This is an example of a cut down game system
--- Can you figure out what the game is?
--- Put comments in describing the SQL and its purpose.
---
-DROP DATABASE if exists gamedb;
-CREATE DATABASE gamedb;
 USE gamedb;
 
-DROP USER if exists 'aiden'@'localhost';
+SET SQL_SAFE_UPDATES = 0; 
 
+DROP USER if exists 'aiden'@'localhost';
 CREATE USER 'aiden'@'localhost' IDENTIFIED BY '12345';
 GRANT ALL ON gamedb.* TO 'aiden'@'localhost';
 
 SELECT 'Connected to the DB' as STATUS;
 
-DROP TABLE IF EXISTS tblClickTarget;
-CREATE TABLE tblClickTarget(
-   UserName varchar(50) PRIMARY KEY,
-   `Password` varchar(50) NULL,
-   Attempts INT DEFAULT 0,
-   LOCKED_OUT BOOL DEFAULT FALSE,
-   X INT DEFAULT 100 , Y INT DEFAULT 100, 
-   Strength INT DEFAULT 10
-);
--- The CREATE TABLE and all other table specific DML could be put
--- into a PROCEDURE. I would expect you to do that for your Milestone One.
-INSERT tblClickTarget( UserName, `Password`)
-VALUES ('Luffy','10000'),
-       ('Zorro','100') ;tblclicktarget
+INSERT Player( `Name`, `Password`, Email, isAdmin)
+VALUES ('aiden', 'aiden', 'aiden', TRUE),
+       ('user', 'user', 'user', FALSE);
+       
+SELECT * from Player;
 
-DROP PROCEDURE IF EXISTS Login;
-
+#DROP PROCEDURE IF EXISTS Login;
 DELIMITER $$
-
-CREATE PROCEDURE Login( IN pUserName VARCHAR(50), IN pPassword  VARCHAR(50))
+#CALL Login('aiden', 'aiden');
+CREATE PROCEDURE Login( IN pName VARCHAR(50), IN pPassword  VARCHAR(50))
 COMMENT 'Check login'
 BEGIN
     DECLARE numAttempts INT DEFAULT 0;
+
+    
+    IF pName = '' OR pPassword = '' THEN
+		SELECT 'Some fields are Empty, Please fill out all fields' AS MESSAGE;
+	END IF;
     
 	-- 'Check for valid login', 
     -- if valid then select message "Logged in" and reset Attempts to 0, 
     IF EXISTS ( SELECT * 
-                FROM tblClickTarget
+                FROM Player
                 WHERE 
-                  UserName = pUserName AND
+				  `Name` = pName AND
                   `Password` = pPassword 
-                  ) 
+                  and LOCKED_OUT = False)
 	THEN
-		UPDATE tblClickTarget 
+		UPDATE Player
         SET Attempts = 0
         WHERE
-           UserName = pUserName;
-           
-		SELECT 'Logged In' as Message;
-    
+           `Name` = pName;
+		SELECT 'Logged In' as Message, pName as `Name`, isAdmin FROM Player Where pName = `Name`;
     ELSE 
     -- else add to Attempts ,
-        IF EXISTS(SELECT * FROM tblClickTarget WHERE UserName = pUserName) THEN 
+        IF EXISTS(SELECT * FROM Player WHERE `Name` = pName) THEN 
         
 			SELECT Attempts 
 			INTO numAttempts
-			FROM tblClickTarget
+			FROM Player
 			WHERE 
-			   UserName = pUserName;
+			   `Name` = pName;
 			
 			SET numAttempts = numAttempts + 1;
 			
 			IF numAttempts > 5 THEN 
 			-- if Attempts > 5 then set lockout  to true and select message 'locked out' 
-				UPDATE tblClickTarget 
+				UPDATE Player
 				SET LOCKED_OUT = True
 				WHERE 
-					 UserName = pUserName ;
+					 `Name` = pName ;
 					 
-				 SELECT 'Locked Out' AS Message;
+				 SELECT 'Locked Out, Please contact a Administrator' AS Message, pName as `Name`, isAdmin FROM Player Where pName = `Name`;
 				 
 			ELSE
 			-- else select message 'Bad  password'
-                 UPDATE tblClickTarget
+                 UPDATE Player
                  SET Attempts = numAttempts
                  WHERE 
-                    UserName = pUserName;
+                    `Name` = pName;
                     
-				 SELECT 'Invalid user name and password';
+				 SELECT 'Invalid user name and password' AS MESSAGE, pName as `Name`, isAdmin FROM Player Where pName = `Name`;
 			END IF;
       ELSE 
-		SELECT 'Invalid user name and password';
+		SELECT 'Invalid user name and password' AS MESSAGE, pName as `Name`, isAdmin FROM Player Where pName = `Name`;
       END IF;
 
     
@@ -93,30 +81,78 @@ BEGIN
 END $$
 DELIMITER ;
 
-call Login('ToddC','1234');
+#SELECT `Name`, Attempts 
+#FROM Player;
 
-SELECT UserName, Attempts 
-FROM tblClickTarget;
+#SELECT * from tblClickTarget;
 
-
-DROP PROCEDURE IF EXISTS AddUserName;
+#DROP PROCEDURE IF EXISTS AddUserName;
 DELIMITER $$
-CREATE PROCEDURE AddUserName(IN pUserName VARCHAR(50))
+CREATE PROCEDURE AddUserName(IN pName VARCHAR(50), IN pPassword VARCHAR(50), IN  pEmail VARCHAR(100))
 BEGIN
-  IF EXISTS (SELECT * 
-     FROM tblClickTarget
-     WHERE Username = pUserName) THEN
-  BEGIN
-     SELECT 'NAME EXISTS' AS MESSAGE;
-  END;
+  IF EXISTS (SELECT * FROM Player WHERE `Name` = pName) THEN
+     SELECT 'USERNAME EXISTS' AS MESSAGE;
+  ELSEIF EXISTS (SELECT * FROM Player WHERE Email = pEmail) THEN
+     SELECT 'EMAIL ALREADY USED' AS MESSAGE;
   ELSE 
-     INSERT INTO tblClickTarget(UserName, X,Y)
-     VALUE (pUserName, 100,100); -- Need to check the X,Y location
-     SELECT 'ADDED USER NAME' AS MESSAGE;
+	IF pName = '' OR pPassword = '' OR pEmail = '' THEN
+		SELECT 'Some fields are Empty, Please fill out all fields' AS MESSAGE;
+	ELSEIF LENGTH(pName) < 5 OR LENGTH(pPassword) < 5 OR LENGTH(pEmail) < 5 THEN
+        SELECT 'All fields require at least five characters.' AS MESSAGE;
+	ELSE
+		INSERT INTO Player(`Name`, `Password`, Email)
+		VALUE (pName, pPassword, pEmail); -- Need to check the X,Y location
+		SELECT 'ADDED USER NAME' AS MESSAGE, pName as `Name`, isAdmin FROM Player Where pName = `Name`;
+	END IF;
+    
   END IF;
   
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS DeletePlayer;
+DELIMITER $$
+CREATE PROCEDURE DeletePlayer(IN `pName` VARCHAR(50))
+BEGIN
+    DECLARE resultMessage VARCHAR(100);
+    
+    -- Check if the player exists
+    IF EXISTS (SELECT 1 FROM Player WHERE Name = pName) THEN
+        DELETE FROM Player WHERE Name = pName;
+        SET resultMessage = CONCAT('Player ', pName, ' deleted successfully.');
+    ELSE
+        SET resultMessage = CONCAT('Player not found. You tried searching for user: ', pName);
+    END IF;
+    
+    -- Return the result message
+    SELECT resultMessage AS Message;
+END $$
+DELIMITER ;
+
+#Call DeletePlayer('user');
+
+DELIMITER $$
+CREATE PROCEDURE GetPlayerByName(IN pName VARCHAR(50))
+BEGIN
+    SELECT Name, Password, Email
+    FROM Player
+    WHERE Name = pName;
+END $$
+DELIMITER ;
+#CALL UpdatePlayer('aiden', 'aiden_new', 'newPassword', 'newEmail@example.com');
+#SELECT * FROM Player WHERE Name = 'aiden_new';
+
+DELIMITER $$
+CREATE PROCEDURE UpdatePlayer(IN pName VARCHAR(50), IN pNewName VARCHAR(50), IN pPassword VARCHAR(50), IN pEmail VARCHAR(100))
+BEGIN
+    UPDATE Player
+    SET `Password` = pPassword, Email = pEmail, `Name` = pNewName
+    WHERE `Name` = pName;
+
+    SELECT 'Player details updated successfully.' AS Message;
+END $$
+DELIMITER ;
+
 
 /*
 DROP PROCEDURE IF EXISTS PlayerQuit;
@@ -169,13 +205,16 @@ BEGIN
 END$$
 
 
-
+*/
 DROP PROCEDURE IF EXISTS GetAllPlayers$$
+DELIMITER $$
 CREATE PROCEDURE GetAllPlayers()
 BEGIN
-	SELECT UserName, Strength, X, Y
-    FROM tblClickTarget ;
+	SELECT `Name`, Wins
+	FROM Player ;
 END$$
+
+/*
 DELIMITER $$
 DROP PROCEDURE IF EXISTS Move$$
 CREATE PROCEDURE Move(pMaxX INT, pMaxY INT)
@@ -236,7 +275,8 @@ CALL Move(1024,1024);
 
 -- SELECT * 
 -- FROM tblClickTarget;
-Call GetAllPlayers();
+Call GetAllPlayers();	
+
 tblclicktarget
 -- Call PlayerQuit('Asterix');
 */
