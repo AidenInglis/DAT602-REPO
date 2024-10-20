@@ -1,96 +1,93 @@
-use gamedb;
+DROP DATABASE IF EXISTS gamedb;
+CREATE DATABASE gamedb;
+USE gamedb;
 
+-- Drop existing procedure if it exists
 DELIMITER $$
-DROP PROCEDURE IF EXISTS TablesCreation;
 CREATE PROCEDURE TablesCreation()
 BEGIN
+    -- Drop existing tables if they exist
+    DROP TABLE IF EXISTS Item, Player, Game, Tile, Monster, ItemInventory, PlayerChat;
 
-DROP TABLE IF EXISTS PlayerGame, Playerchat, Monster, Game, Tile, Item, Map, ItemInventory, Player;
--- creating all my tables
-CREATE TABLE Player (
-    PlayerID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    `Name` VARCHAR(255),
-    `Password` VARCHAR(255),
-    `Status` VARCHAR(255),
-    Email VARCHAR(255),
-    isAdmin BOOL,
-    Wins INT
-);
+    -- Create tables
+    CREATE TABLE Item (
+        ItemID INT PRIMARY KEY AUTO_INCREMENT,
+        `Name` VARCHAR(255),
+        EffectType VARCHAR(255),
+        EffectAmount INT
+    );
 
-CREATE TABLE Game (
-    GameID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    MapID INT,
-    `Status` VARCHAR(255)
-);
+    CREATE TABLE Player (
+        PlayerID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+        `Name` VARCHAR(255),
+        `Password` VARCHAR(255),
+        `Status` VARCHAR(255) DEFAULT 'OFFLINE',
+        Email VARCHAR(255),
+        Attempts INT DEFAULT 0,
+        LOCKED_OUT BOOL DEFAULT FALSE,
+        isAdmin BOOL DEFAULT FALSE,
+        Wins INT DEFAULT 0,
+        Health INT DEFAULT 100,
+        Strength INT DEFAULT 10,
+        X INT DEFAULT 1, 
+        Y INT DEFAULT 1,
+        Item VARCHAR(50)
+    );
 
-CREATE TABLE PlayerGame (
-    GameID INT,
-    PlayerID INT,
-    TileID INT,
-    Health INT,
-    Strength INT,
-    PRIMARY KEY (GameID, PlayerID),
-    FOREIGN KEY (GameID) REFERENCES Game(GameID),
-    FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID)
-);
+    CREATE TABLE Game (
+        GameID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+        MapID INT,
+        `Status` VARCHAR(255)
+    );
 
-CREATE TABLE Item (
-    ItemID INT PRIMARY KEY AUTO_INCREMENT,
-    `Name` VARCHAR(255),
-    EffectType VARCHAR(255),
-    EffectAmount INT
-);
+    CREATE TABLE Tile (
+        TileID INT PRIMARY KEY AUTO_INCREMENT,
+        MapID INT,
+        `Row` INT,
+        `Col` INT,
+        TileType INT,
+        ItemID INT,
+        FOREIGN KEY (MapID) REFERENCES Game(GameID)
+    );
 
-CREATE TABLE Map (
-    MapID INT PRIMARY KEY AUTO_INCREMENT,
-    GameID INT,
-    ItemID INT,
-    MonsterNo INT,
-    FOREIGN KEY (GameID) REFERENCES Game(GameID)
-);
+    CREATE TABLE Monster (
+        MonsterID INT PRIMARY KEY AUTO_INCREMENT,
+        Health INT,
+        Strength INT,
+        `Status` VARCHAR(255),
+        GameID INT,
+        FOREIGN KEY (GameID) REFERENCES Game(GameID)
+    );
 
-CREATE TABLE Tile (
-    TileID INT PRIMARY KEY AUTO_INCREMENT,
-    MapID INT,
-    ItemID INT,
-    FOREIGN KEY (MapID) REFERENCES Map(MapID)
-);
+    CREATE TABLE ItemInventory (
+        PlayerID INT,
+        GameID INT,
+        ItemID INT,
+        ItemType VARCHAR(255),
+        PRIMARY KEY (PlayerID, GameID, ItemID),
+        FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID),
+        FOREIGN KEY (GameID) REFERENCES Game(GameID),
+        FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
+    );
 
-CREATE TABLE Monster (
-    MonsterID INT PRIMARY KEY AUTO_INCREMENT,
-    Health INT,
-    Strength INT,
-    `Status` VARCHAR(255),
-    GameID INT,
-    MapID INT,
-    FOREIGN KEY (GameID) REFERENCES Game(GameID),
-    FOREIGN KEY (MapID) REFERENCES Map(MapID)
-);
+    CREATE TABLE PlayerChat (
+        ChatID INT PRIMARY KEY AUTO_INCREMENT,
+        `Timestamp` TIMESTAMP,
+        `Text` VARCHAR(255),
+        PlayerID INT,
+        GameID INT,
+        FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID),
+        FOREIGN KEY (GameID) REFERENCES Game(GameID)
+    );
+END$$
+DELIMITER ;
 
-CREATE TABLE ItemInventory (
-    PlayerID INT,
-    GameID INT,
-    ItemID INT,
-    ItemType VARCHAR(255),
-    PRIMARY KEY (PlayerID, GameID, ItemID),
-    FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID),
-    FOREIGN KEY (GameID) REFERENCES Game(GameID),
-    FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
-);
+CALL TablesCreation();
 
-CREATE TABLE PlayerChat (
-    ChatID INT PRIMARY KEY AUTO_INCREMENT,
-    `Timestamp` TIMESTAMP,
-    `Text` VARCHAR(255),
-    PlayerID INT,
-    GameID INT,
-    FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID),
-    FOREIGN KEY (GameID) REFERENCES Game(GameID)
-);
-
- END;
-
-Call TablesCreation();
+#DROP PROCEDURE IF EXISTS InsertsCreation;
+DELIMITER $$
+CREATE PROCEDURE InsertsCreation()
+BEGIN
 -- insert statements for tables
 INSERT INTO Player (`Name`, `Password`, `Status`, isAdmin, Email, Wins)
 VALUES 
@@ -140,3 +137,7 @@ INSERT INTO PlayerChat (`Timestamp`, `Text`, PlayerID, GameID)
 VALUES 
 (NOW(), 'Hello, World!', 1, 1),
 (NOW(), 'Game on!', 2, 2);
+END$$
+DELIMITER $$
+
+#CALL InsertsCreation();
