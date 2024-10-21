@@ -13,3 +13,32 @@ All my written assignment is in the word document in the github files.
 3. I have made a CRUD table that represents all of the required tasks of this which meet either Create, read, update, or delete.
 4. I have developed SQL produres that create the tables and their relationships in sql. after the procedure i have insert statements to test the relation between them using test-data.
 5. I have made a C# application and linked it to this repo, however there seems to be an error when i seem to push it to this repo so i have just zipped it and added it in the files. it has three important screens that are all linked. I have threee data access objects that all represent different things, the game access represents when a new game is opened, a admin one is when you log in (default admin for now), and the user one is when the user logs out(login+registration).
+
+
+
+
+
+M2 & M3 
+
+write up the progress on the current status of the functionality tasks for your project.
+
+1. Player login, including lock out. [4]
+- this has been implemented front and back connections
+3. Player registration,[4]
+- this has been implemented front and back connections
+4. Laying out tiles on a game board. [4]
+- this has been implemented front and back connections
+5. Placing an item on a tile. [4]
+- this has been implemented front and back connections
+6. Player game play movement, i.e., moving a player to a “legal” tile. [4]
+7. Game play scoring. How do players gain and lose points? [4]
+8. Player game play acquiring inventory, e.g., picking up items off a tile and putting them in an
+inventory (bag?) [4]
+9. Move an Item (NPC effect). [4]
+10. Kill running games. [4]
+11. Add new players. [4]
+- this has been implemented front and back connections
+12. Update data of a player. [4]
+- this has been implemented front and back connections
+13. Delete a player. [4]
+- this has been implemented front and back connections
